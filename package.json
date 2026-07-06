@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "description": "Text-to-SQL MCP server: read-only natural-language querying for PostgreSQL and MySQL",
   "type": "module",
-  "bin": { "database-mcp": "dist/index.js" },
+  "bin": {
+    "database-mcp": "dist/index.js"
+  },
   "files": ["dist", "README.md"],
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepare": "tsc -p tsconfig.json",
@@ -21,6 +25,8 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@testcontainers/mysql": "^12.0.4",
+    "@testcontainers/postgresql": "^12.0.4",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.11.0",
     "testcontainers": "^10.13.0",

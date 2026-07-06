@@ -1,0 +1,30 @@
+{
+  "name": "database-mcp",
+  "version": "0.1.0",
+  "description": "Text-to-SQL MCP server: read-only natural-language querying for PostgreSQL and MySQL",
+  "type": "module",
+  "bin": { "database-mcp": "dist/index.js" },
+  "files": ["dist", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json",
+    "test": "vitest run test/unit",
+    "test:integration": "vitest run test/integration --testTimeout 120000",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "mysql2": "^3.11.0",
+    "node-sql-parser": "^5.3.0",
+    "pg": "^8.13.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "testcontainers": "^10.13.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

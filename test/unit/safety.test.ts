@@ -30,6 +30,14 @@ const MUST_REJECT: Array<[string, string]> = [
   // garbage
   ["NOT REAL SQL AT ALL", "parse_error"],
   ["", "parse_error"],
+  // C1: SELECT INTO / INTO OUTFILE / INTO DUMPFILE write server-side state
+  ["SELECT * INTO newtab FROM users", "not_read_only"],
+  ["SELECT * FROM users INTO OUTFILE '/tmp/x.csv'", "not_read_only"],
+  ["SELECT * FROM users INTO DUMPFILE '/tmp/x'", "not_read_only"],
+  // I2: parenthesized EXPLAIN (ANALYZE ...) must be rejected without
+  // relying on a parse failure.
+  ["EXPLAIN (ANALYZE) SELECT 1", "not_read_only"],
+  ["EXPLAIN (ANALYZE, FORMAT JSON) SELECT 1", "not_read_only"],
 ];
 
 // Fixtures valid for every engine.
@@ -92,5 +100,25 @@ describe("ensureLimit", () => {
   });
   it("leaves existing LIMIT alone", () => {
     expect(ensureLimit("SELECT * FROM t LIMIT 5", 100)).toBe("SELECT * FROM t LIMIT 5");
+  });
+
+  // I1: a trailing line comment must not hide an already-injected LIMIT,
+  // and `limit N` appearing inside a comment must not be mistaken for a
+  // real LIMIT clause.
+  it("does not mistake `limit N` inside a line comment for a real LIMIT", () => {
+    const out = ensureLimit("SELECT * FROM t -- limit 3", 100);
+    expect(out).toMatch(/LIMIT 100$/);
+  });
+
+  it("appends LIMIT on a new line so a trailing comment can't swallow it", () => {
+    const out = ensureLimit("SELECT * FROM t -- hi", 100);
+    expect(out).toBe("SELECT * FROM t -- hi\nLIMIT 100");
+    expect(out).toMatch(/LIMIT 100$/);
+  });
+
+  it("does not mistake `limit N` inside a string literal for a real LIMIT, and preserves the literal", () => {
+    const out = ensureLimit("SELECT '-- limit 3' AS s FROM t", 100);
+    expect(out).toMatch(/LIMIT 100$/);
+    expect(out).toContain("'-- limit 3'");
   });
 });

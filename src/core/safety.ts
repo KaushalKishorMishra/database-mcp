@@ -142,20 +142,6 @@ export function validateReadOnly(sql: string, engine: Engine): ValidationResult 
   return { ok: true, statementType, hasLimit };
 }
 
-/**
- * Scans `sql` once, tracking string-literal state so that `--` line
- * comments, `/* ... *&#47;` block comments, and text inside `'...'`/`"..."`
- * literals aren't mistaken for real SQL tokens.
- *
- * Returns:
- * - `masked`: same length structure as the input, but with comment bodies
- *   removed and string-literal contents replaced by spaces — safe to run
- *   keyword regexes against without false positives from literals or
- *   comments (e.g. `SELECT '-- limit 3'` or `SELECT 1 -- limit 3`).
- * - `endsInLineComment`: true if the input ends while still inside an
- *   unterminated `--` comment, meaning anything appended directly after it
- *   (on the same line) would be swallowed by that comment.
- */
 /** Consume a `'...'`/`"..."` literal starting at `i` (which points at the opening quote). */
 function consumeStringLiteral(sql: string, i: number): { text: string; nextIndex: number } {
   const quote = sql[i];

@@ -169,6 +169,23 @@ describe("MCP server tools", () => {
     expect(p.message).toContain("Add filters or a smaller LIMIT");
   });
 
+  it("strips the `ok` field from ValidationFail-shaped adapter rejections", async () => {
+    (adapter.execute as ReturnType<typeof vi.fn>).mockRejectedValueOnce({
+      ok: false,
+      error: "not_read_only",
+      message: "rejected",
+    });
+    const res = await client.callTool({
+      name: "run_query",
+      arguments: { connection: "prod_pg", sql: "UPDATE users SET id = 2" },
+    });
+    expect((res as { isError?: boolean }).isError).toBe(true);
+    const p = payload(res);
+    expect(p.error).toBe("not_read_only");
+    expect(p.message).toBe("rejected");
+    expect(p).not.toHaveProperty("ok");
+  });
+
   it("sanitize maps MySQL max_execution_time to timeout error code", async () => {
     (adapter.execute as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("Query execution was interrupted, maximum statement execution time exceeded (max_execution_time)")

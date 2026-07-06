@@ -18,9 +18,12 @@ function ok(payload: unknown) {
 }
 
 function toolError(e: ToolError) {
+  // Adapters may throw a ValidationFail-shaped object ({ok:false, error, message});
+  // strip any `ok` field so it never leaks into the client-facing payload.
+  const { ok: _ok, ...rest } = e as ToolError & { ok?: unknown };
   return {
     isError: true,
-    content: [{ type: "text" as const, text: JSON.stringify(e) }],
+    content: [{ type: "text" as const, text: JSON.stringify(rest) }],
   };
 }
 

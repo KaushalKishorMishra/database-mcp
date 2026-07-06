@@ -137,4 +137,48 @@ describe("MCP server tools", () => {
       expect.objectContaining({ maxRows: 1000 }),
     );
   });
+
+  it("sanitize redacts URLs from connection errors", async () => {
+    (adapter.execute as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('connection to server at "postgres://admin:s3cretpw@db.host:5432/prod" failed')
+    );
+    const res = await client.callTool({
+      name: "run_query",
+      arguments: { connection: "prod_pg", sql: "SELECT 1" },
+    });
+    expect((res as { isError?: boolean }).isError).toBe(true);
+    const p = payload(res);
+    expect(p.error).toBe("connection_failed");
+    expect(p.message).toContain("[redacted]");
+    const fullText = JSON.stringify(res);
+    expect(fullText).not.toContain("s3cretpw");
+    expect(fullText).not.toContain("postgres://");
+  });
+
+  it("sanitize maps statement timeout to timeout error code", async () => {
+    (adapter.execute as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("canceling statement due to statement timeout")
+    );
+    const res = await client.callTool({
+      name: "run_query",
+      arguments: { connection: "prod_pg", sql: "SELECT 1" },
+    });
+    expect((res as { isError?: boolean }).isError).toBe(true);
+    const p = payload(res);
+    expect(p.error).toBe("timeout");
+    expect(p.message).toContain("Add filters or a smaller LIMIT");
+  });
+
+  it("sanitize maps MySQL max_execution_time to timeout error code", async () => {
+    (adapter.execute as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("Query execution was interrupted, maximum statement execution time exceeded (max_execution_time)")
+    );
+    const res = await client.callTool({
+      name: "run_query",
+      arguments: { connection: "prod_pg", sql: "SELECT 1" },
+    });
+    expect((res as { isError?: boolean }).isError).toBe(true);
+    const p = payload(res);
+    expect(p.error).toBe("timeout");
+  });
 });

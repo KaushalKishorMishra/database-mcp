@@ -21,7 +21,8 @@
 - Named connections come from env vars prefixed `DBMCP_` (e.g. `DBMCP_PROD_PG=postgres://…`); name = suffix lowercased (`prod_pg`).
 - ESM throughout (`"type": "module"`, NodeNext resolution). Import local files with `.js` extensions.
 - **Commits: after each task's final step, invoke the `/auto-commit` skill** (user preference) instead of hand-writing `git commit` commands.
-- Unit tests must not require Docker/DBs. Integration tests (testcontainers) live in `test/integration/` and run via `npm run test:integration` only.
+- **Use bun, not npm, for all dev commands** (`bun install`, `bun add -d`, `bun run <script>`, `bunx <tool>`). Always `bun run test` — never bare `bun test`, which invokes bun's own runner instead of vitest. Exception: consumer-facing artifacts (client-config `npx` commands, plugin.json, the `prepare` script) stay npm-compatible since end users may not have bun.
+- Unit tests must not require Docker/DBs. Integration tests (testcontainers) live in `test/integration/` and run via `bun run test:integration` only.
 
 ---
 
@@ -49,7 +50,7 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "prepare": "npm run build",
+    "prepare": "tsc -p tsconfig.json",
     "test": "vitest run test/unit",
     "test:integration": "vitest run test/integration --testTimeout 120000",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -102,7 +103,7 @@ export default defineConfig({
 
 - [ ] **Step 4: Install dependencies**
 
-Run: `npm install`
+Run: `bun install`
 Expected: succeeds, `node_modules/` created (already gitignored).
 
 - [ ] **Step 5: Write `src/core/adapter.ts`**
@@ -231,7 +232,7 @@ describe("core types", () => {
 
 - [ ] **Step 7: Verify typecheck + test pass**
 
-Run: `npm run typecheck && npm test`
+Run: `bun run typecheck && bun run test`
 Expected: typecheck clean; 1 test passes.
 
 - [ ] **Step 8: Commit via the auto-commit skill**
@@ -342,7 +343,7 @@ describe("ensureLimit", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `npx vitest run test/unit/safety.test.ts`
+Run: `bunx vitest run test/unit/safety.test.ts`
 Expected: FAIL — `Cannot find module '../../src/core/safety.js'`.
 
 - [ ] **Step 3: Implement `src/core/safety.ts`**
@@ -465,12 +466,12 @@ export function ensureLimit(sql: string, limit: number): string {
 
 - [ ] **Step 4: Run tests until green**
 
-Run: `npx vitest run test/unit/safety.test.ts`
+Run: `bunx vitest run test/unit/safety.test.ts`
 Expected: PASS. If a specific fixture fails because `node-sql-parser` maps it to a different type/error than assumed (e.g. CTE-with-DELETE may throw a parse error rather than yield an AST — Postgres data-modifying CTEs aren't fully supported by the parser), that is acceptable **only if** the query is still rejected: adjust the *expected error code* in the test, never weaken a rejection into an acceptance. Every MUST_REJECT entry must stay rejected.
 
 - [ ] **Step 5: Full suite + typecheck**
 
-Run: `npm run typecheck && npm test`
+Run: `bun run typecheck && bun run test`
 Expected: all green.
 
 - [ ] **Step 6: Commit via the auto-commit skill**
@@ -621,7 +622,7 @@ describe("ConnectionRegistry", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `npx vitest run test/unit/config.test.ts test/unit/registry.test.ts`
+Run: `bunx vitest run test/unit/config.test.ts test/unit/registry.test.ts`
 Expected: FAIL — modules not found.
 
 - [ ] **Step 3: Implement `src/config.ts`**
@@ -757,12 +758,12 @@ export class ConnectionRegistry {
 
 - [ ] **Step 5: Run tests until green**
 
-Run: `npx vitest run test/unit/config.test.ts test/unit/registry.test.ts`
+Run: `bunx vitest run test/unit/config.test.ts test/unit/registry.test.ts`
 Expected: PASS.
 
 - [ ] **Step 6: Full suite + typecheck, then commit**
 
-Run: `npm run typecheck && npm test` → all green.
+Run: `bun run typecheck && bun run test` → all green.
 Invoke `/auto-commit`.
 
 ---
@@ -855,7 +856,7 @@ describe("SchemaCache", () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npx vitest run test/unit/formatter.test.ts test/unit/schemaCache.test.ts`
+Run: `bunx vitest run test/unit/formatter.test.ts test/unit/schemaCache.test.ts`
 Expected: FAIL — modules not found.
 
 - [ ] **Step 3: Implement `src/core/formatter.ts`**
@@ -930,7 +931,7 @@ export class SchemaCache {
 
 - [ ] **Step 5: Run until green, full suite, commit**
 
-Run: `npm run typecheck && npm test` → all green.
+Run: `bun run typecheck && bun run test` → all green.
 Invoke `/auto-commit`.
 
 ---
@@ -940,7 +941,7 @@ Invoke `/auto-commit`.
 **Files:**
 - Create: `src/core/adapters/postgres.ts`
 - Create: `test/integration/adapterContract.ts` (shared suite, reused by Task 6)
-- Test: `test/integration/postgres.test.ts` (testcontainers; NOT part of `npm test`)
+- Test: `test/integration/postgres.test.ts` (testcontainers; NOT part of `bun run test`)
 
 **Interfaces:**
 - Consumes: `DatabaseAdapter` + all types from `src/core/adapter.js`; `validateReadOnly`, `ensureLimit` from `src/core/safety.js`.
@@ -1242,16 +1243,16 @@ it("engine-level backstop: INSERT inside READ ONLY tx fails", async () => {
 }, 120_000);
 ```
 
-Note: add `@testcontainers/postgresql` and (Task 6) `@testcontainers/mysql` to devDependencies: `npm i -D @testcontainers/postgresql @testcontainers/mysql`.
+Note: add `@testcontainers/postgresql` and (Task 6) `@testcontainers/mysql` to devDependencies: `bun add -d @testcontainers/postgresql @testcontainers/mysql`.
 
 - [ ] **Step 4: Run integration tests (requires Docker)**
 
-Run: `npm run test:integration -- postgres`
+Run: `bun run test:integration -- postgres`
 Expected: PASS. If Docker isn't available, note it and rely on CI/user to run; unit suite must still pass.
 
 - [ ] **Step 5: Typecheck + unit suite, then commit**
 
-Run: `npm run typecheck && npm test` → green.
+Run: `bun run typecheck && bun run test` → green.
 Invoke `/auto-commit`.
 
 ---
@@ -1474,12 +1475,12 @@ it("engine-level backstop: INSERT inside READ ONLY tx fails", async () => {
 
 - [ ] **Step 3: Run integration tests (requires Docker)**
 
-Run: `npm run test:integration`
+Run: `bun run test:integration`
 Expected: PASS for both engines (or noted as requiring Docker).
 
 - [ ] **Step 4: Typecheck + unit suite, then commit**
 
-Run: `npm run typecheck && npm test` → green.
+Run: `bun run typecheck && bun run test` → green.
 Invoke `/auto-commit`.
 
 ---
@@ -1652,7 +1653,7 @@ describe("MCP server tools", () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `npx vitest run test/unit/server.test.ts`
+Run: `bunx vitest run test/unit/server.test.ts`
 Expected: FAIL — `src/server.js` not found.
 
 - [ ] **Step 3: Implement `src/server.ts`**
@@ -1809,12 +1810,12 @@ export function createServer({ registry, cache, settings }: Deps): McpServer {
 
 - [ ] **Step 4: Run until green**
 
-Run: `npx vitest run test/unit/server.test.ts`
+Run: `bunx vitest run test/unit/server.test.ts`
 Expected: PASS. (If the installed SDK version's `registerTool` signature differs — e.g. expects `inputSchema` as a zod raw shape vs `z.object()` — check `node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp.d.ts` and adapt; the raw-shape form above matches SDK ≥1.10.)
 
 - [ ] **Step 5: Full suite + typecheck, then commit**
 
-Run: `npm run typecheck && npm test` → green.
+Run: `bun run typecheck && bun run test` → green.
 Invoke `/auto-commit`.
 
 ---
@@ -1880,7 +1881,7 @@ main().catch((e) => {
 Run:
 
 ```bash
-npm run build
+bun run build
 DBMCP_TEST_PG="postgres://u:p@localhost/db" node dist/index.js <<'EOF'
 {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}
 {"jsonrpc":"2.0","method":"notifications/initialized"}
@@ -1892,12 +1893,12 @@ Expected: two JSON-RPC responses on stdout; the `tools/list` result names all si
 
 - [ ] **Step 3: Verify npx-from-git packaging**
 
-Run: `npm pack --dry-run`
+Run: `bun pm pack --dry-run`
 Expected: tarball contains `dist/` (built by `prepare`), `README.md`, `package.json` — and no `src/`, `test/`, or `docs/`.
 
 - [ ] **Step 4: Full suite + typecheck, then commit**
 
-Run: `npm run typecheck && npm test` → green.
+Run: `bun run typecheck && bun run test` → green.
 Invoke `/auto-commit`.
 
 ---
@@ -1987,7 +1988,7 @@ Sections (write in full, no placeholders except `REPLACE_GH_USER`):
    GRANT SELECT, SHOW VIEW ON mydb.* TO 'mcp_readonly'@'%';
    ```
 6. **Example session** — a short transcript: user question → `get_schema` → `run_query` → answer.
-7. **Development** — `npm install`, `npm test`, `npm run test:integration` (needs Docker).
+7. **Development** — `bun install`, `bun run test`, `bun run test:integration` (needs Docker).
 
 - [ ] **Step 5: Validate plugin JSON + commit**
 
@@ -2003,12 +2004,12 @@ Invoke `/auto-commit`.
 
 - [ ] **Step 1: Full unit suite + typecheck**
 
-Run: `npm run typecheck && npm test`
+Run: `bun run typecheck && bun run test`
 Expected: all green.
 
 - [ ] **Step 2: Integration suite (Docker required)**
 
-Run: `npm run test:integration`
+Run: `bun run test:integration`
 Expected: Postgres + MySQL contract suites and both engine-level backstop tests pass. If Docker is unavailable locally, state this explicitly to the user rather than skipping silently.
 
 - [ ] **Step 3: Live smoke test against a real MCP client**
@@ -2023,4 +2024,4 @@ Then in a Claude Code session ask: *"Using database-mcp-dev, list the connection
 
 - [ ] **Step 4: Final commit via auto-commit; offer next steps**
 
-Invoke `/auto-commit`. Then offer the user: fill in `REPLACE_GH_USER`, create the GitHub repo, push, and optionally `npm publish`.
+Invoke `/auto-commit`. Then offer the user: fill in `REPLACE_GH_USER`, create the GitHub repo, push, and optionally publish to the npm registry (`bun publish`).

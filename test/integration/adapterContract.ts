@@ -64,6 +64,12 @@ export function runAdapterContract(
       expect(r.truncated).toBe(true);
     });
 
+    it("does not flag truncation when the result count exactly matches maxRows", async () => {
+      const r = await adapter.execute("SELECT * FROM customers", { maxRows: 3, timeoutMs: 15000 });
+      expect(r.rows.length).toBe(3);
+      expect(r.truncated).toBe(false);
+    });
+
     it("explain returns a plan without executing", async () => {
       const e = await adapter.explain("SELECT * FROM orders");
       expect(e.plan.length).toBeGreaterThan(0);

@@ -134,24 +134,34 @@ export class PostgresAdapter implements DatabaseAdapter {
   async execute(sql: string, opts: ExecuteOptions): Promise<QueryResult> {
     const v = validateReadOnly(sql, this.engine);
     if (!v.ok) throw v;
-    const finalSql = v.statementType === "select" ? ensureLimit(sql, opts.maxRows) : sql;
+    // Fetch one extra row beyond maxRows so we can distinguish an exact-fit
+    // result (rowCount === maxRows, not truncated) from a truly truncated one.
+    const finalSql = v.statementType === "select" ? ensureLimit(sql, opts.maxRows + 1) : sql;
 
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN TRANSACTION READ ONLY");
+      // SET LOCAL cannot take bind parameters in Postgres; the value is a
+      // floored number, and a malformed value fails safe as invalid SQL.
       await client.query(`SET LOCAL statement_timeout = ${Math.floor(opts.timeoutMs)}`);
       const res = await client.query({ text: finalSql, rowMode: "array" });
-      const rows = (res.rows as unknown[][]).slice(0, opts.maxRows);
+      const all = res.rows as unknown[][];
+      const rows = all.slice(0, opts.maxRows);
       return {
         columns: res.fields.map((f) => f.name),
         rows,
         rowCount: rows.length,
-        truncated: (res.rows as unknown[][]).length > opts.maxRows ||
-          rows.length === opts.maxRows,
+        truncated: all.length > opts.maxRows,
       };
     } finally {
-      try { await client.query("ROLLBACK"); } catch { /* connection may be dead */ }
-      client.release();
+      try {
+        await client.query("ROLLBACK");
+        client.release();
+      } catch {
+        // Transaction state is unknown after a failed ROLLBACK — evict the
+        // connection from the pool instead of recycling a dirty one.
+        client.release(true);
+      }
     }
   }
 }

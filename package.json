@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "prepare": "tsc -p tsconfig.json",
+    "prepare": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "vitest run test/unit",
     "test:integration": "vitest run test/integration --testTimeout 120000",
     "typecheck": "tsc -p tsconfig.json --noEmit"

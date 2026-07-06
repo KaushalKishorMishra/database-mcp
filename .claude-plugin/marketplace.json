@@ -1,0 +1,11 @@
+{
+  "name": "database-mcp-marketplace",
+  "owner": { "name": "Kaushal Mishra" },
+  "plugins": [
+    {
+      "name": "database-mcp",
+      "source": "./",
+      "description": "Read-only Text-to-SQL MCP server for PostgreSQL and MySQL."
+    }
+  ]
+}

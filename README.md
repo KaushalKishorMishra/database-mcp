@@ -1,5 +1,7 @@
 # database-mcp
 
+[![CI](https://github.com/KaushalKishorMishra/database-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/KaushalKishorMishra/database-mcp/actions/workflows/ci.yml)
+
 Read-only Text-to-SQL over PostgreSQL and MySQL, as an MCP (Model Context
 Protocol) server. Ask a question in natural language in your MCP client (e.g.
 Claude Code); the client's LLM turns it into SQL and calls this server's

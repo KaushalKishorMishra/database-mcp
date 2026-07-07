@@ -1,5 +1,5 @@
 {
-  "name": "@kaushalkishormishra/database-mcp",
+  "name": "@kaushalkmishra_dev/database-mcp",
   "version": "0.1.1",
   "description": "Text-to-SQL MCP server: read-only natural-language querying for PostgreSQL and MySQL",
   "type": "module",

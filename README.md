@@ -55,7 +55,7 @@ Claude Code's `.mcp.json`):
   "mcpServers": {
     "database-mcp": {
       "command": "npx",
-      "args": ["-y", "github:REPLACE_GH_USER/database-mcp"],
+      "args": ["-y", "github:KaushalKishorMishra/database-mcp"],
       "env": {
         "DBMCP_PROD_PG": "postgres://mcp_readonly:password@host:5432/mydb"
       }
@@ -67,13 +67,13 @@ Claude Code's `.mcp.json`):
 ### Option B: `claude mcp add` (Claude Code CLI)
 
 ```bash
-claude mcp add database-mcp -e DBMCP_PROD_PG=postgres://mcp_readonly:password@host:5432/mydb -- npx -y github:REPLACE_GH_USER/database-mcp
+claude mcp add database-mcp -e DBMCP_PROD_PG=postgres://mcp_readonly:password@host:5432/mydb -- npx -y github:KaushalKishorMishra/database-mcp
 ```
 
 ### Option C: Claude Code plugin
 
 ```
-/plugin marketplace add REPLACE_GH_USER/database-mcp
+/plugin marketplace add KaushalKishorMishra/database-mcp
 /plugin install database-mcp
 ```
 
@@ -83,7 +83,7 @@ in your shell or client environment before starting Claude Code.
 ### Option D: Clone and build
 
 ```bash
-git clone https://github.com/REPLACE_GH_USER/database-mcp.git
+git clone https://github.com/KaushalKishorMishra/database-mcp.git
 cd database-mcp
 bun install
 bun run build

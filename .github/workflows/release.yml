@@ -12,8 +12,6 @@ jobs:
   release:
     name: Test, build, and publish GitHub Release
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -29,11 +27,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-
-      # Optional: only runs if an NPM_TOKEN secret has been configured in the
-      # repo (Settings > Secrets > Actions). Until then this step is skipped.
-      - name: Publish to npm
-        if: ${{ env.NPM_TOKEN != '' }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          npm publish --access public

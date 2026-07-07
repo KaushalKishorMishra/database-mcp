@@ -1,13 +1,11 @@
 {
-  "name": "@kaushalkmishra_dev/database-mcp",
+  "name": "database-mcp",
   "version": "0.1.5",
   "description": "Text-to-SQL MCP server: read-only natural-language querying for PostgreSQL and MySQL",
   "type": "module",
+  "private": true,
   "bin": {
     "database-mcp": "dist/index.js"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "files": [
     "dist",

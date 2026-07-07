@@ -1,0 +1,12 @@
+{
+  "name": "database-mcp",
+  "description": "Read-only Text-to-SQL over PostgreSQL and MySQL: ask questions in natural language, get answers backed by safe, verified SQL.",
+  "version": "0.1.0",
+  "author": { "name": "Kaushal Mishra" },
+  "mcpServers": {
+    "database-mcp": {
+      "command": "npx",
+      "args": ["-y", "github:KaushalKishorMishra/database-mcp"]
+    }
+  }
+}
